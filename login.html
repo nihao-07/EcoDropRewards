@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - EcoBottle</title>
+  <style>
+    body {
+      font-family: Poppins, sans-serif;
+      background: linear-gradient(to bottom right, #eaffea, #ffffff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .card {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #a3d9a5;
+      border-radius: 8px;
+    }
+    button {
+      background: #6abf69;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover { background: #5cae5c; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Welcome Back 🌱</h2>
+    <input type="text" id="loginPhone" placeholder="Phone Number">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p id="loginMsg"></p>
+    <p>Don’t have an account? <a href="signup.html">Sign up</a></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs } 
+    from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
+      authDomain: "ecodrop-c571f.firebaseapp.com",
+      projectId: "ecodrop-c571f",
+      storageBucket: "ecodrop-c571f.firebasestorage.app",
+      messagingSenderId: "338661782199",
+      appId: "1:338661782199:web:9990829a46cd2ab57f9332"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.login = async function() {
+      const phone = document.getElementById("loginPhone").value.trim();
+      const password = document.getElementById("loginPassword").value.trim();
+      const msg = document.getElementById("loginMsg");
+
+      if (!phone || !password) {
+        msg.textContent = "⚠️ Please fill in all fields.";
+        msg.style.color = "red";
+        return;
+      }
+
+      const q = query(collection(db, "users"), where("phone", "==", phone), where("password", "==", password));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        msg.textContent = "❌ Invalid phone or password.";
+        msg.style.color = "red";
+        return;
+      }
+
+      let user = null;
+      querySnapshot.forEach(doc => user = { id: doc.id, ...doc.data() });
+
+      localStorage.setItem("loggedUser", JSON.stringify(user));
+      msg.textContent = "✅ Login successful!";
+      msg.style.color = "green";
+
+      setTimeout(() => window.location.href = "user.html", 1000);
+    };
+  </script>
+</body>
+</html>

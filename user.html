@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile - EcoBottle</title>
+  <style>
+    body {
+      font-family: Poppins, sans-serif;
+      background: #f6fff6;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+    }
+    header {
+      background: #6abf69;
+      color: white;
+      width: 100%;
+      text-align: center;
+      padding: 1rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 300px;
+    }
+    nav {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      background: white;
+      border-top: 1px solid #ddd;
+      padding: 10px 0;
+    }
+    nav a {
+      color: #6abf69;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>EcoBottle Dashboard 🌱</header>
+  <main>
+    <div class="card">
+      <h3 id="userName">Guest</h3>
+      <p><strong>Phone:</strong> <span id="userPhone">-</span></p>
+      <p><strong>Points:</strong> <span id="userPoints">0</span></p>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </main>
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="redeem.html">Redeem</a>
+    <a href="user.html">Profile</a>
+  </nav>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("loggedUser"));
+    if (!user) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("userName").textContent = user.name;
+      document.getElementById("userPhone").textContent = user.phone;
+      document.getElementById("userPoints").textContent = user.points;
+    }
+
+    function logout() {
+      localStorage.removeItem("loggedUser");
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>

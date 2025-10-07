@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redeem - EcoBottle</title>
+  <style>
+    body {
+      font-family: Poppins, sans-serif;
+      background: #f6fff6;
+      text-align: center;
+      margin: 0;
+      padding-bottom: 60px;
+    }
+    header {
+      background: #6abf69;
+      color: white;
+      padding: 1rem;
+      font-size: 1.3rem;
+    }
+    .card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      width: 300px;
+      margin: 40px auto;
+      padding: 25px;
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      border: 1px solid #a3d9a5;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    button {
+      background: #6abf69;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover { background: #5cae5c; }
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background: white;
+      border-top: 1px solid #ddd;
+      padding: 10px 0;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+    nav a {
+      color: #6abf69;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    #redeemMsg {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>Redeem Bottle Codes 🌿</header>
+  <main>
+    <h2>Hi, <span id="userName">Guest</span>!</h2>
+    <p>You have <strong><span id="userPoints">0</span></strong> points.</p>
+
+    <div class="card">
+      <h3>Enter Your Code</h3>
+      <input type="text" id="redeemCode" placeholder="e.g., M01-AB123">
+      <button onclick="redeemCode()">Redeem</button>
+      <p id="redeemMsg"></p>
+    </div>
+  </main>
+
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="redeem.html">Redeem</a>
+    <a href="user.html">Profile</a>
+  </nav>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      query, 
+      where, 
+      getDocs, 
+      updateDoc, 
+      doc 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
+      authDomain: "ecodrop-c571f.firebaseapp.com",
+      projectId: "ecodrop-c571f",
+      storageBucket: "ecodrop-c571f.firebasestorage.app",
+      messagingSenderId: "338661782199",
+      appId: "1:338661782199:web:9990829a46cd2ab57f9332"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Load current user
+    const user = JSON.parse(localStorage.getItem("loggedUser"));
+    if (!user) window.location.href = "login.html";
+
+    document.getElementById("userName").textContent = user.name;
+    document.getElementById("userPoints").textContent = user.points;
+
+    // Redeem Function
+    window.redeemCode = async function() {
+      const codeInput = document.getElementById("redeemCode").value.trim();
+      const msg = document.getElementById("redeemMsg");
+
+      if (!codeInput) {
+        msg.textContent = "⚠️ Please enter a code.";
+        msg.style.color = "red";
+        return;
+      }
+
+      try {
+        // Look for code in Firebase
+        const q = query(collection(db, "codes"), where("code", "==", codeInput));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          msg.textContent = "❌ Invalid code.";
+          msg.style.color = "red";
+          return;
+        }
+
+        let codeDoc;
+        querySnapshot.forEach(docSnap => {
+          codeDoc = { id: docSnap.id, ...docSnap.data() };
+        });
+
+        if (codeDoc.used) {
+          msg.textContent = "⚠️ Code already used.";
+          msg.style.color = "orange";
+          return;
+        }
+
+        // Add +1 point to user
+        const newPoints = user.points + 1;
+        user.points = newPoints;
+        localStorage.setItem("loggedUser", JSON.stringify(user));
+        document.getElementById("userPoints").textContent = newPoints;
+
+        // Update Firestore
+        await updateDoc(doc(db, "users", user.id), { points: newPoints });
+        await updateDoc(doc(db, "codes", codeDoc.id), { used: true, usedBy: user.phone });
+
+        msg.textContent = "✅ Code accepted! +1 point added.";
+        msg.style.color = "green";
+        document.getElementById("redeemCode").value = "";
+
+      } catch (error) {
+        console.error(error);
+        msg.textContent = "⚠️ Something went wrong. Try again.";
+        msg.style.color = "red";
+      }
+    };
+  </script>
+</body>
+</html>

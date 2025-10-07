@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - EcoBottle</title>
+  <style>
+    body {
+      font-family: Poppins, sans-serif;
+      background: linear-gradient(to bottom right, #eaffea, #ffffff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .card {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #a3d9a5;
+      border-radius: 8px;
+    }
+    button {
+      background: #6abf69;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover { background: #5cae5c; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Create Your EcoBottle Account</h2>
+    <input type="text" id="signupName" placeholder="Full Name">
+    <input type="text" id="signupPhone" placeholder="Phone Number">
+    <input type="password" id="signupPassword" placeholder="Password">
+    <button onclick="signup()">Sign Up</button>
+    <p id="signupMsg"></p>
+    <p>Already have an account? <a href="login.html">Login</a></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, where, getDocs } 
+    from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
+      authDomain: "ecodrop-c571f.firebaseapp.com",
+      projectId: "ecodrop-c571f",
+      storageBucket: "ecodrop-c571f.firebasestorage.app",
+      messagingSenderId: "338661782199",
+      appId: "1:338661782199:web:9990829a46cd2ab57f9332"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.signup = async function() {
+      const name = document.getElementById("signupName").value.trim();
+      const phone = document.getElementById("signupPhone").value.trim();
+      const password = document.getElementById("signupPassword").value.trim();
+      const msg = document.getElementById("signupMsg");
+
+      if (!name || !phone || !password) {
+        msg.textContent = "⚠️ Please fill in all fields.";
+        msg.style.color = "red";
+        return;
+      }
+
+      const q = query(collection(db, "users"), where("phone", "==", phone));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        msg.textContent = "❌ Phone number already registered.";
+        msg.style.color = "red";
+        return;
+      }
+
+      await addDoc(collection(db, "users"), {
+        name, phone, password, points: 0, createdAt: new Date()
+      });
+
+      msg.textContent = "✅ Account created successfully!";
+      msg.style.color = "green";
+
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1500);
+    };
+  </script>
+</body>
+</html>

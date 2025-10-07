@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home - EcoBottle</title>
+  <style>
+    body {
+      font-family: Poppins, sans-serif;
+      background: #f6fff6;
+      text-align: center;
+    }
+    header {
+      background: #6abf69;
+      color: white;
+      padding: 1rem;
+      font-size: 1.3rem;
+    }
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background: white;
+      border-top: 1px solid #ddd;
+      padding: 10px 0;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+    nav a {
+      color: #6abf69;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>Welcome to EcoBottle 🌱</header>
+  <main>
+    <h2>Hello, <span id="userName">Guest</span>!</h2>
+    <p>Track your bottle points and redeem rewards!</p>
+  </main>
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="redeem.html">Redeem</a>
+    <a href="user.html">Profile</a>
+  </nav>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("loggedUser"));
+    if (!user) window.location.href = "login.html";
+    else document.getElementById("userName").textContent = user.name;
+  </script>
+</body>
+</html>
