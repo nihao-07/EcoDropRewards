@@ -74,7 +74,7 @@
     <div class="card">
       <h3>Enter Your Code</h3>
       <input type="text" id="redeemCode" placeholder="e.g., MO1-AB123" maxlength="9">
-      <button onclick="redeemCode()">Redeem</button>
+      <button id="redeemBtn" onclick="redeemCode()">Redeem</button>
       <p id="redeemMsg"></p>
     </div>
   </main>
@@ -85,8 +85,24 @@
     <a href="user.html">Profile</a>
   </nav>
 
-  <!-- ✅ SINGLE script block -->
+  <!-- ✅ Updated script -->
   <script type="module">
+    /* --- STEP 1: Auto-fill from QR --- */
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeFromQR = urlParams.get("code");
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (codeFromQR) {
+        const input = document.getElementById("redeemCode");
+        if (input) input.value = codeFromQR;
+
+        // Optional: auto-redeem immediately
+        const redeemBtn = document.getElementById("redeemBtn");
+        if (redeemBtn) redeemBtn.click();
+      }
+    });
+
+    /* --- STEP 2: Firebase logic --- */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getFirestore, collection, query, where, getDocs,
