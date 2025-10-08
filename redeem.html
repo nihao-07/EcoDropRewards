@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Redeem - EcoBottle</title>
   <style>
     body {
@@ -32,6 +32,7 @@
       border: 1px solid #a3d9a5;
       border-radius: 8px;
       margin-top: 10px;
+      text-align: center;
     }
     button {
       background: #6abf69;
@@ -72,7 +73,7 @@
 
     <div class="card">
       <h3>Enter Your Code</h3>
-      <input type="text" id="redeemCode" placeholder="e.g., M01-AB123">
+      <input type="text" id="redeemCode" placeholder="e.g., MO1-AB123" maxlength="9">
       <button onclick="redeemCode()">Redeem</button>
       <p id="redeemMsg"></p>
     </div>
@@ -87,16 +88,9 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { 
-      getFirestore, 
-      collection, 
-      query, 
-      where, 
-      getDocs, 
-      updateDoc, 
-      doc 
+      getFirestore, collection, query, where, getDocs, updateDoc, doc 
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
       authDomain: "ecodrop-c571f.firebaseapp.com",
@@ -109,20 +103,20 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Load current user
     const user = JSON.parse(localStorage.getItem("loggedUser"));
     if (!user) window.location.href = "login.html";
 
     document.getElementById("userName").textContent = user.name;
     document.getElementById("userPoints").textContent = user.points;
 
-    // Redeem Function
     window.redeemCode = async function() {
-      const codeInput = document.getElementById("redeemCode").value.trim();
+      const codeInput = document.getElementById("redeemCode").value.trim().toUpperCase();
       const msg = document.getElementById("redeemMsg");
 
-      if (!codeInput) {
-        msg.textContent = "⚠️ Please enter a code.";
+      // ✅ Validate format: MO1-AB123
+      const pattern = /^MO\d-[A-Z]{2}\d{3}$/;
+      if (!pattern.test(codeInput)) {
+        msg.textContent = "⚠️ Invalid code format (use MO1-AB123).";
         msg.style.color = "red";
         return;
       }
@@ -150,13 +144,13 @@
         }
 
         // Add +1 point to user
-        const newPoints = user.points + 1;
+        const newPoints = (user.points || 0) + 1;
         user.points = newPoints;
         localStorage.setItem("loggedUser", JSON.stringify(user));
         document.getElementById("userPoints").textContent = newPoints;
 
         // Update Firestore
-        await updateDoc(doc(db, "users", user.id), { points: newPoints });
+        await updateDoc(doc(db, "users", user.phone), { points: newPoints });
         await updateDoc(doc(db, "codes", codeDoc.id), { used: true, usedBy: user.phone });
 
         msg.textContent = "✅ Code accepted! +1 point added.";
