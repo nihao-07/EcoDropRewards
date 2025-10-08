@@ -9,12 +9,55 @@
       font-family: Poppins, sans-serif;
       background: #f6fff6;
       text-align: center;
+      margin: 0;
+      padding-bottom: 70px; /* space for bottom nav */
     }
     header {
       background: #6abf69;
       color: white;
       padding: 1rem;
       font-size: 1.3rem;
+    }
+    main {
+      margin-top: 20px;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    #leaderboard {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 400px;
+      margin: 20px auto;
+      padding: 15px;
+      text-align: left;
+    }
+    #leaderboard h3 {
+      text-align: center;
+      color: #6abf69;
+      margin-bottom: 10px;
+    }
+    #leaderboard ol {
+      list-style: none;
+      padding: 0;
+    }
+    #leaderboard li {
+      background: #f0fff0;
+      margin: 5px 0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #leaderboard li span.name {
+      font-weight: bold;
+      color: #333;
+    }
+    #leaderboard li span.points {
+      color: #6abf69;
     }
     nav {
       display: flex;
@@ -35,20 +78,76 @@
 </head>
 <body>
   <header>Welcome to EcoBottle 🌱</header>
+
   <main>
     <h2>Hello, <span id="userName">Guest</span>!</h2>
     <p>Track your bottle points and redeem rewards!</p>
+
+    <!-- Leaderboard Section -->
+    <div id="leaderboard">
+      <h3>🏆 Top 10 Recyclers</h3>
+      <p id="loadingText">Loading leaderboard...</p>
+      <ol id="leaderboardList"></ol>
+    </div>
   </main>
+
   <nav>
     <a href="home.html">Home</a>
     <a href="redeem.html">Redeem</a>
     <a href="user.html">Profile</a>
   </nav>
 
-  <script>
+  <!-- Firebase Leaderboard Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
+      authDomain: "ecodrop-c571f.firebaseapp.com",
+      projectId: "ecodrop-c571f",
+      storageBucket: "ecodrop-c571f.firebasestorage.app",
+      messagingSenderId: "338661782199",
+      appId: "1:338661782199:web:9990829a46cd2ab57f9332"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Display current user
     const user = JSON.parse(localStorage.getItem("loggedUser"));
     if (!user) window.location.href = "login.html";
     else document.getElementById("userName").textContent = user.name;
+
+    // Load leaderboard from Firestore
+    async function loadLeaderboard() {
+      const leaderboardList = document.getElementById("leaderboardList");
+      const loadingText = document.getElementById("loadingText");
+      loadingText.textContent = "Loading...";
+
+      const q = query(collection(db, "users"), orderBy("points", "desc"), limit(10));
+      const snapshot = await getDocs(q);
+
+      leaderboardList.innerHTML = "";
+      let rank = 1;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const name = data.name || "Anonymous";
+        const points = data.points || 0;
+        leaderboardList.innerHTML += `
+          <li>
+            <span class="name">${rank}. ${name}</span>
+            <span class="points">${points} pts</span>
+          </li>
+        `;
+        rank++;
+      });
+
+      loadingText.style.display = "none";
+    }
+
+    loadLeaderboard();
   </script>
 </body>
 </html>
