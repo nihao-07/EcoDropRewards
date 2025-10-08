@@ -44,13 +44,23 @@ window.signup = async function() {
       return;
     }
 
-    await addDoc(collection(db, "users"), {
-      name: name,
-      phone: phone,
-      password: password,
-      points: 0,
-      createdAt: new Date()
-    });
+    const docRef = await addDoc(collection(db, "users"), {
+  name: name,
+  phone: phone,
+  password: password,
+  points: 0,
+  createdAt: new Date()
+});
+
+// ✅ Save user locally with Firestore ID
+const userData = {
+  id: docRef.id,   // <--- Firestore-generated ID
+  name,
+  phone,
+  points: 0
+};
+localStorage.setItem("loggedUser", JSON.stringify(userData));
+
 
     msg.textContent = "✅ Account created successfully!";
     msg.style.color = "green";
@@ -65,3 +75,4 @@ window.signup = async function() {
     msg.style.color = "red";
   }
 };
+
