@@ -85,84 +85,91 @@
     <a href="user.html">Profile</a>
   </nav>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { 
-      getFirestore, collection, query, where, getDocs, updateDoc, doc 
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+ <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import {
+  getFirestore, collection, query, where, getDocs,
+  doc, updateDoc, getDoc
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
-      authDomain: "ecodrop-c571f.firebaseapp.com",
-      projectId: "ecodrop-c571f",
-      storageBucket: "ecodrop-c571f.firebasestorage.app",
-      messagingSenderId: "338661782199",
-      appId: "1:338661782199:web:9990829a46cd2ab57f9332"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
+  authDomain: "ecodrop-c571f.firebaseapp.com",
+  projectId: "ecodrop-c571f",
+  storageBucket: "ecodrop-c571f.firebasestorage.app",
+  messagingSenderId: "338661782199",
+  appId: "1:338661782199:web:9990829a46cd2ab57f9332"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    const user = JSON.parse(localStorage.getItem("loggedUser"));
-    if (!user) window.location.href = "login.html";
+window.redeemCode = async function() {
+  const inputCode = document.getElementById("codeInput").value.trim();
+  const msg = document.getElementById("redeemMsg");
+  const user = JSON.parse(localStorage.getItem("loggedUser"));
 
-    document.getElementById("userName").textContent = user.name;
-    document.getElementById("userPoints").textContent = user.points;
+  if (!user) {
+    msg.textContent = "⚠️ Please log in first.";
+    msg.style.color = "red";
+    return;
+  }
 
-    window.redeemCode = async function() {
-      const codeInput = document.getElementById("redeemCode").value.trim().toUpperCase();
-      const msg = document.getElementById("redeemMsg");
+  if (!inputCode) {
+    msg.textContent = "⚠️ Enter a code.";
+    msg.style.color = "red";
+    return;
+  }
 
-      // ✅ Validate format: MO1-AB123
-      const pattern = /^MO\d-[A-Z]{2}\d{3}$/;
-      if (!pattern.test(codeInput)) {
-        msg.textContent = "⚠️ Invalid code format (use MO1-AB123).";
-        msg.style.color = "red";
-        return;
-      }
+  try {
+    // 1️⃣ Find code in Firestore
+    const codesRef = collection(db, "codes");
+    const q = query(codesRef, where("code", "==", inputCode));
+    const querySnapshot = await getDocs(q);
 
-      try {
-        // Look for code in Firebase
-        const q = query(collection(db, "codes"), where("code", "==", codeInput));
-        const querySnapshot = await getDocs(q);
+    if (querySnapshot.empty) {
+      msg.textContent = "❌ Invalid code.";
+      msg.style.color = "red";
+      return;
+    }
 
-        if (querySnapshot.empty) {
-          msg.textContent = "❌ Invalid code.";
-          msg.style.color = "red";
-          return;
-        }
+    let codeDoc = null;
+    querySnapshot.forEach(docSnap => {
+      codeDoc = { id: docSnap.id, ...docSnap.data() };
+    });
 
-        let codeDoc;
-        querySnapshot.forEach(docSnap => {
-          codeDoc = { id: docSnap.id, ...docSnap.data() };
-        });
+    // 2️⃣ Check if already used
+    if (codeDoc.used) {
+      msg.textContent = "⚠️ Code already used.";
+      msg.style.color = "orange";
+      return;
+    }
 
-        if (codeDoc.used) {
-          msg.textContent = "⚠️ Code already used.";
-          msg.style.color = "orange";
-          return;
-        }
+    // 3️⃣ Mark code as used
+    await updateDoc(doc(db, "codes", codeDoc.id), { used: true });
 
-        // Add +1 point to user
-        const newPoints = (user.points || 0) + 1;
-        user.points = newPoints;
-        localStorage.setItem("loggedUser", JSON.stringify(user));
-        document.getElementById("userPoints").textContent = newPoints;
+    // 4️⃣ Update user points
+    const userRef = doc(db, "users", user.id);
+    const userSnap = await getDoc(userRef);
+    let newPoints = (userSnap.data().points || 0) + 1;
 
-        // Update Firestore
-        await updateDoc(doc(db, "users", user.phone), { points: newPoints });
-        await updateDoc(doc(db, "codes", codeDoc.id), { used: true, usedBy: user.phone });
+    await updateDoc(userRef, { points: newPoints });
 
-        msg.textContent = "✅ Code accepted! +1 point added.";
-        msg.style.color = "green";
-        document.getElementById("redeemCode").value = "";
+    // 5️⃣ Update localStorage and UI
+    user.points = newPoints;
+    localStorage.setItem("loggedUser", JSON.stringify(user));
 
-      } catch (error) {
-        console.error(error);
-        msg.textContent = "⚠️ Something went wrong. Try again.";
-        msg.style.color = "red";
-      }
-    };
-  </script>
+    msg.textContent = `✅ Code accepted! You earned 1 point. Total: ${newPoints}`;
+    msg.style.color = "green";
+
+  } catch (error) {
+    console.error("Error redeeming code:", error);
+    msg.textContent = "❌ Something went wrong. Try again.";
+    msg.style.color = "red";
+  }
+};
+</script>
+
 </body>
 </html>
+
