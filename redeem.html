@@ -85,6 +85,7 @@
     <a href="user.html">Profile</a>
   </nav>
 
+  <!-- ✅ SINGLE script block -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
@@ -104,7 +105,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ✅ Load logged user info
+    // ✅ Load user info
     const user = JSON.parse(localStorage.getItem("loggedUser"));
     const userNameEl = document.getElementById("userName");
     const userPointsEl = document.getElementById("userPoints");
