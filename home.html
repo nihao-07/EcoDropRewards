@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Home - EcoBottle</title>
   <style>
     body {
@@ -10,7 +10,7 @@
       background: #f6fff6;
       text-align: center;
       margin: 0;
-      padding-bottom: 70px; /* space for bottom nav */
+      padding: 0 0 60px 0;
     }
     header {
       background: #6abf69;
@@ -19,15 +19,12 @@
       font-size: 1.3rem;
     }
     main {
-      margin-top: 20px;
-    }
-    h2 {
-      margin-bottom: 10px;
+      padding: 20px;
     }
     #leaderboard {
       background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       width: 90%;
       max-width: 400px;
       margin: 20px auto;
@@ -35,29 +32,11 @@
       text-align: left;
     }
     #leaderboard h3 {
+      color: #6abf69;
       text-align: center;
-      color: #6abf69;
-      margin-bottom: 10px;
     }
-    #leaderboard ol {
-      list-style: none;
-      padding: 0;
-    }
-    #leaderboard li {
-      background: #f0fff0;
-      margin: 5px 0;
-      padding: 8px 12px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    #leaderboard li span.name {
-      font-weight: bold;
-      color: #333;
-    }
-    #leaderboard li span.points {
-      color: #6abf69;
+    ol {
+      padding-left: 20px;
     }
     nav {
       display: flex;
@@ -78,14 +57,12 @@
 </head>
 <body>
   <header>Welcome to EcoBottle 🌱</header>
-
   <main>
     <h2>Hello, <span id="userName">Guest</span>!</h2>
     <p>Track your bottle points and redeem rewards!</p>
 
-    <!-- Leaderboard Section -->
     <div id="leaderboard">
-      <h3>🏆 Top 10 Recyclers</h3>
+      <h3>🏆 Top Recyclers</h3>
       <p id="loadingText">Loading leaderboard...</p>
       <ol id="leaderboardList"></ol>
     </div>
@@ -97,54 +74,58 @@
     <a href="user.html">Profile</a>
   </nav>
 
-  <!-- Firebase Leaderboard Script -->
+  <!-- ✅ Firebase imports -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+    // --- Firebase config (replace with yours) ---
     const firebaseConfig = {
-      apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
-      authDomain: "ecodrop-c571f.firebaseapp.com",
-      projectId: "ecodrop-c571f",
-      storageBucket: "ecodrop-c571f.firebasestorage.app",
-      messagingSenderId: "338661782199",
-      appId: "1:338661782199:web:9990829a46cd2ab57f9332"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Display current user
+    // --- Show logged user name ---
     const user = JSON.parse(localStorage.getItem("loggedUser"));
     if (!user) window.location.href = "login.html";
     else document.getElementById("userName").textContent = user.name;
 
-    // Load leaderboard from Firestore
+    // --- Load leaderboard ---
     async function loadLeaderboard() {
-      const leaderboardList = document.getElementById("leaderboardList");
-      const loadingText = document.getElementById("loadingText");
-      loadingText.textContent = "Loading...";
+      try {
+        const q = query(collection(db, "users"), orderBy("points", "desc"), limit(10));
+        const snapshot = await getDocs(q);
 
-      const q = query(collection(db, "users"), orderBy("points", "desc"), limit(10));
-      const snapshot = await getDocs(q);
+        const list = document.getElementById("leaderboardList");
+        const loading = document.getElementById("loadingText");
+        loading.style.display = "none";
 
-      leaderboardList.innerHTML = "";
-      let rank = 1;
+        if (snapshot.empty) {
+          list.innerHTML = "<li>No users found</li>";
+          return;
+        }
 
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const name = data.name || "Anonymous";
-        const points = data.points || 0;
-        leaderboardList.innerHTML += `
-          <li>
-            <span class="name">${rank}. ${name}</span>
-            <span class="points">${points} pts</span>
-          </li>
-        `;
-        rank++;
-      });
-
-      loadingText.style.display = "none";
+        let rank = 1;
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const li = document.createElement("li");
+          li.textContent = `${rank}. ${data.name} — ${data.points} pts`;
+          list.appendChild(li);
+          rank++;
+        });
+        console.log("Leaderboard loaded:", snapshot.size);
+      } catch (err) {
+        console.error("Error loading leaderboard:", err);
+        document.getElementById("loadingText").textContent = "Error loading leaderboard.";
+      }
     }
 
     loadLeaderboard();
