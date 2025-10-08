@@ -52,53 +52,83 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, where, getDocs } 
-    from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    query, 
+    where, 
+    getDocs, 
+    doc, 
+    getDoc 
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
-      authDomain: "ecodrop-c571f.firebaseapp.com",
-      projectId: "ecodrop-c571f",
-      storageBucket: "ecodrop-c571f.firebasestorage.app",
-      messagingSenderId: "338661782199",
-      appId: "1:338661782199:web:9990829a46cd2ab57f9332"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
+    authDomain: "ecodrop-c571f.firebaseapp.com",
+    projectId: "ecodrop-c571f",
+    storageBucket: "ecodrop-c571f.firebasestorage.app",
+    messagingSenderId: "338661782199",
+    appId: "1:338661782199:web:9990829a46cd2ab57f9332"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    window.signup = async function() {
-      const name = document.getElementById("signupName").value.trim();
-      const phone = document.getElementById("signupPhone").value.trim();
-      const password = document.getElementById("signupPassword").value.trim();
-      const msg = document.getElementById("signupMsg");
+  window.signup = async function() {
+    const name = document.getElementById("signupName").value.trim();
+    const phone = document.getElementById("signupPhone").value.trim();
+    const password = document.getElementById("signupPassword").value.trim();
+    const msg = document.getElementById("signupMsg");
 
-      if (!name || !phone || !password) {
-        msg.textContent = "⚠️ Please fill in all fields.";
-        msg.style.color = "red";
-        return;
-      }
+    if (!name || !phone || !password) {
+      msg.textContent = "⚠️ Please fill in all fields.";
+      msg.style.color = "red";
+      return;
+    }
 
-      const q = query(collection(db, "users"), where("phone", "==", phone));
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        msg.textContent = "❌ Phone number already registered.";
-        msg.style.color = "red";
-        return;
-      }
+    // 🔍 Check if phone already exists
+    const q = query(collection(db, "users"), where("phone", "==", phone));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      msg.textContent = "❌ Phone number already registered.";
+      msg.style.color = "red";
+      return;
+    }
 
-      await addDoc(collection(db, "users"), {
-        name, phone, password, points: 0, createdAt: new Date()
+    try {
+      // 🧾 Add new user and get their Firestore ID
+      const docRef = await addDoc(collection(db, "users"), {
+        name,
+        phone,
+        password,
+        points: 0,
+        createdAt: new Date()
       });
+
+      // ✅ Retrieve the full user data with the Firestore ID
+      const newUserSnap = await getDoc(docRef);
+      const newUser = { id: docRef.id, ...newUserSnap.data() };
+
+      // 💾 Save to localStorage (optional but convenient)
+      localStorage.setItem("loggedUser", JSON.stringify(newUser));
 
       msg.textContent = "✅ Account created successfully!";
       msg.style.color = "green";
 
+      // ⏳ Redirect after delay
       setTimeout(() => {
         window.location.href = "login.html";
       }, 1500);
-    };
-  </script>
+    } catch (error) {
+      console.error(error);
+      msg.textContent = "⚠️ Error creating account.";
+      msg.style.color = "red";
+    }
+  };
+</script>
+
 </body>
 </html>
+
