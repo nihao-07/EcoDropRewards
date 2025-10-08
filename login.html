@@ -1,3 +1,53 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+<meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<title>Login - EcoBottle</title> 
+
+<style>
+ body { 
+font-family: Poppins, sans-serif; 
+background: linear-gradient(to bottom right, #eaffea, #ffffff); 
+display: flex; align-items: center; 
+justify-content: center; 
+height: 100vh; } 
+
+.card { 
+background: #ffffff; 
+padding: 30px; 
+border-radius: 15px;
+ box-shadow: 0 0 15px rgba(0,0,0,0.1); 
+width: 90%; 
+max-width: 400px; 
+text-align: center; } 
+
+input { width: 90%;
+ padding: 10px; 
+margin: 10px 0; 
+border: 1px solid #a3d9a5; 
+border-radius: 8px; } 
+
+button { background: #6abf69; 
+color: white; padding: 10px 20px; 
+border: none; 
+border-radius: 8px; 
+cursor: pointer; } 
+
+button:hover { background: #5cae5c; }
+ </style>
+ </head> 
+<body> 
+<div class="card">
+
+ <h2>Welcome Back 🌱</h2> 
+<input type="text" id="loginPhone" placeholder="Phone Number"> 
+<input type="password" id="loginPassword" placeholder="Password"> 
+<button onclick="login()">Login</button> 
+<p id="loginMsg"></p> 
+<p>Don’t have an account? <a href="signup.html">Sign up</a></p> 
+</div> 
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   import { 
@@ -65,3 +115,4 @@
     }
   };
 </script>
+ </body> </html>
