@@ -104,6 +104,35 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
+    authDomain: "ecodrop-c571f.firebaseapp.com",
+    projectId: "ecodrop-c571f",
+    storageBucket: "ecodrop-c571f.firebasestorage.app",
+    messagingSenderId: "338661782199",
+    appId: "1:338661782199:web:9990829a46cd2ab57f9332"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ✅ Load logged user info
+  const user = JSON.parse(localStorage.getItem("loggedUser"));
+
+  if (user) {
+    document.getElementById("userName").textContent = user.name;
+    document.getElementById("userPoints").textContent = user.points ?? 0;
+  } else {
+    document.getElementById("userName").textContent = "Guest";
+    document.getElementById("userPoints").textContent = 0;
+  }
+</script>
+
+   
 window.redeemCode = async function() {
   const inputCode = document.getElementById("redeemCode").value.trim(); // ✅ fixed ID
   const msg = document.getElementById("redeemMsg");
@@ -169,5 +198,6 @@ window.redeemCode = async function() {
 
 </body>
 </html>
+
 
 
