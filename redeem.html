@@ -74,7 +74,7 @@
     <div class="card">
       <h3>Enter Your Code</h3>
       <input type="text" id="redeemCode" placeholder="e.g., MO1-FZ852">
-      <button id="redeemBtn">Redeem</button>
+      <button id="redeemBtn" onclick="redeemCode()">Redeem</button>
       <p id="redeemMsg"></p>
     </div>
   </main>
@@ -86,6 +86,8 @@
   </nav>
 
   <script type="module">
+    console.log("✅ Redeem script loaded!");
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getFirestore, collection, query, where, getDocs,
@@ -116,11 +118,10 @@
       userPointsEl.textContent = user.points ?? 0;
     }
 
-    // ✅ Redeem button click
-    document.getElementById("redeemBtn").addEventListener("click", redeemCode);
-
-    async function redeemCode() {
+    // ✅ Redeem function
+    window.redeemCode = async function () {
       const inputCode = document.getElementById("redeemCode").value.trim().toUpperCase();
+      console.log("🔍 Redeeming code:", inputCode);
       msg.textContent = "";
 
       if (!user) {
@@ -135,9 +136,9 @@
       }
 
       try {
-        console.log("Redeeming code:", inputCode);
         const q = query(collection(db, "codes"), where("code", "==", inputCode));
         const snapshot = await getDocs(q);
+        console.log("📦 Query snapshot size:", snapshot.size);
 
         if (snapshot.empty) {
           msg.textContent = "❌ Invalid code.";
@@ -147,6 +148,7 @@
 
         let codeDoc = null;
         snapshot.forEach(docSnap => codeDoc = { id: docSnap.id, ...docSnap.data() });
+        console.log("✅ Found code:", codeDoc);
 
         if (codeDoc.used) {
           msg.textContent = "⚠️ Code already used.";
@@ -175,11 +177,11 @@
         msg.textContent = `✅ Code accepted! You earned 1 point. Total: ${newPoints}`;
         msg.style.color = "green";
       } catch (err) {
-        console.error("Redeem error:", err);
+        console.error("❌ Redeem error:", err);
         msg.textContent = "❌ Something went wrong. Check console for details.";
         msg.style.color = "red";
       }
-    }
+    };
   </script>
 </body>
 </html>
