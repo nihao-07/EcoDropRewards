@@ -1,108 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Profile - EcoBottle</title>
   <style>
     body {
-      font-family: "Poppins", sans-serif;
+      font-family: Poppins, sans-serif;
       background: #f6fff6;
       color: #333;
       display: flex;
       flex-direction: column;
       align-items: center;
       height: 100vh;
-      margin: 0;
     }
-
     header {
       background: #6abf69;
       color: white;
       width: 100%;
       text-align: center;
       padding: 1rem;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       font-weight: bold;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     }
-
     main {
       flex: 1;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      width: 100%;
-      padding-bottom: 70px;
     }
-
-    .profile-card {
+    .card {
       background: white;
-      width: 320px;
+      padding: 25px;
       border-radius: 15px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
       text-align: center;
-      overflow: hidden;
+      width: 300px;
       position: relative;
     }
-
-    .profile-header {
-      background: #6abf69;
-      height: 120px;
-      position: relative;
-    }
-
-    /* 🦫 Cartoon Capybara avatar */
-    .profile-avatar {
+    .avatar {
       width: 100px;
       height: 100px;
       border-radius: 50%;
-      border: 4px solid #fff;
+      background: white;
+      border: 4px solid #6abf69;
       position: absolute;
-      top: 60px;
+      top: -50px;
       left: 50%;
       transform: translateX(-50%);
-      background: url('https://cdn-icons-png.flaticon.com/512/825/825509.png') center/cover no-repeat;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
     }
-
-    .profile-card h3 {
-      margin-top: 70px;
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .card h3 {
+      margin-top: 60px;
       font-size: 1.3rem;
     }
-
-    .profile-card p {
-      margin: 6px 0;
-      font-size: 0.95rem;
-    }
-
     .points {
-      background: linear-gradient(90deg, #d2ffc9, #e8ffe8);
-      color: #2b7a2b;
-      border-radius: 10px;
-      padding: 6px 12px;
       display: inline-block;
-      margin-top: 8px;
+      background: #e6f9e6;
+      padding: 5px 15px;
+      border-radius: 10px;
+      margin-top: 10px;
       font-weight: bold;
-      box-shadow: 0 0 6px rgba(106, 191, 105, 0.4);
+      color: #2b7a2b;
     }
-
-    .logout-btn {
-      margin-top: 15px;
+    button {
       background: #6abf69;
       color: white;
       border: none;
+      padding: 8px 15px;
       border-radius: 8px;
-      padding: 8px 16px;
       cursor: pointer;
-      font-weight: bold;
-      transition: 0.2s;
+      margin-top: 10px;
     }
-
-    .logout-btn:hover {
-      background: #58a658;
-    }
-
     nav {
       display: flex;
       justify-content: space-around;
@@ -110,45 +85,31 @@
       background: white;
       border-top: 1px solid #ddd;
       padding: 10px 0;
-      position: fixed;
-      bottom: 0;
-      left: 0;
     }
-
     nav a {
       color: #6abf69;
       text-decoration: none;
       font-weight: bold;
-      font-size: 0.95rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    nav a:hover {
-      color: #4d9b4d;
     }
   </style>
 </head>
 <body>
-  <header>EcoBottle Profile 🪴</header>
-
+  <header>EcoBottle Profile 🌱</header>
   <main>
-    <div class="profile-card">
-      <div class="profile-header">
-        <div class="profile-avatar"></div>
+    <div class="card">
+      <div class="avatar">
+        <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png" alt="Capybara Avatar">
       </div>
       <h3 id="userName">Guest</h3>
       <p><strong>📱 Phone:</strong> <span id="userPhone">-</span></p>
       <p class="points">💚 Points: <span id="userPoints">0</span></p>
-      <button class="logout-btn" onclick="logout()">Logout</button>
+      <button onclick="logout()">Logout</button>
     </div>
   </main>
-
   <nav>
-    <a href="home.html">🏠 Home</a>
-    <a href="redeem.html">🎁 Redeem</a>
-    <a href="user.html">👤 Profile</a>
+    <a href="home.html">Home</a>
+    <a href="redeem.html">Redeem</a>
+    <a href="user.html">Profile</a>
   </nav>
 
   <script>
