@@ -73,7 +73,7 @@
 
     <div class="card">
       <h3>Enter Your Code</h3>
-      <input type="text" id="redeemCode" placeholder="e.g., MO1-AB123" maxlength="9">
+      <input type="text" id="redeemCode" placeholder="e.g., MO1-FZ852" maxlength="10">
       <button id="redeemBtn" onclick="redeemCode()">Redeem</button>
       <p id="redeemMsg"></p>
     </div>
@@ -85,24 +85,8 @@
     <a href="user.html">Profile</a>
   </nav>
 
-  <!-- ✅ Updated script -->
+  <!-- ✅ Fixed & Improved Script -->
   <script type="module">
-    /* --- STEP 1: Auto-fill from QR --- */
-    const urlParams = new URLSearchParams(window.location.search);
-    const codeFromQR = urlParams.get("code");
-
-    document.addEventListener("DOMContentLoaded", () => {
-      if (codeFromQR) {
-        const input = document.getElementById("redeemCode");
-        if (input) input.value = codeFromQR;
-
-        // Optional: auto-redeem immediately
-        const redeemBtn = document.getElementById("redeemBtn");
-        if (redeemBtn) redeemBtn.click();
-      }
-    });
-
-    /* --- STEP 2: Firebase logic --- */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getFirestore, collection, query, where, getDocs,
@@ -121,7 +105,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ✅ Load user info
+    // --- Load logged user ---
     const user = JSON.parse(localStorage.getItem("loggedUser"));
     const userNameEl = document.getElementById("userName");
     const userPointsEl = document.getElementById("userPoints");
@@ -129,68 +113,80 @@
     if (user && user.name) {
       userNameEl.textContent = user.name;
       userPointsEl.textContent = user.points ?? 0;
-    } else {
-      userNameEl.textContent = "Guest";
-      userPointsEl.textContent = 0;
     }
 
-    // ✅ Redeem function
+    // --- Redeem Function ---
     window.redeemCode = async function () {
-      const inputCode = document.getElementById("redeemCode").value.trim();
       const msg = document.getElementById("redeemMsg");
+      const inputCode = document.getElementById("redeemCode").value.trim().toUpperCase();
+
+      msg.textContent = "";
+      msg.style.color = "black";
 
       if (!user) {
         msg.textContent = "⚠️ Please log in first.";
         msg.style.color = "red";
         return;
       }
-
       if (!inputCode) {
-        msg.textContent = "⚠️ Enter a code.";
+        msg.textContent = "⚠️ Please enter a code.";
         msg.style.color = "red";
         return;
       }
 
       try {
-        const codesRef = collection(db, "codes");
-        const q = query(codesRef, where("code", "==", inputCode));
+        // Find code document
+        const q = query(collection(db, "codes"), where("code", "==", inputCode));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-          msg.textContent = "❌ Invalid code.";
+          msg.textContent = "❌ Invalid or non-existent code.";
           msg.style.color = "red";
           return;
         }
 
-        let codeDoc = null;
+        let codeDocId = null;
+        let codeData = null;
         querySnapshot.forEach(docSnap => {
-          codeDoc = { id: docSnap.id, ...docSnap.data() };
+          codeDocId = docSnap.id;
+          codeData = docSnap.data();
         });
 
-        if (codeDoc.used) {
-          msg.textContent = "⚠️ Code already used.";
+        if (!codeData) throw new Error("Code data missing");
+
+        if (codeData.used === true) {
+          msg.textContent = "⚠️ This code has already been used.";
           msg.style.color = "orange";
           return;
         }
 
+        // Get user reference and points
         const userRef = doc(db, "users", user.id);
         const userSnap = await getDoc(userRef);
-        let newPoints = (userSnap.data().points || 0) + 1;
 
-        await Promise.all([
-          updateDoc(doc(db, "codes", codeDoc.id), { used: true }),
-          updateDoc(userRef, { points: newPoints })
-        ]);
+        if (!userSnap.exists()) {
+          msg.textContent = "⚠️ User not found in database.";
+          msg.style.color = "red";
+          return;
+        }
 
+        const currentPoints = userSnap.data().points || 0;
+        const newPoints = currentPoints + 1;
+
+        // Update both docs
+        await updateDoc(doc(db, "codes", codeDocId), { used: true });
+        await updateDoc(userRef, { points: newPoints });
+
+        // Update UI + local storage
         user.points = newPoints;
         localStorage.setItem("loggedUser", JSON.stringify(user));
         userPointsEl.textContent = newPoints;
 
         msg.textContent = `✅ Code accepted! You earned 1 point. Total: ${newPoints}`;
         msg.style.color = "green";
-      } catch (error) {
-        console.error("Error redeeming code:", error);
-        msg.textContent = "❌ Something went wrong. Try again.";
+      } catch (err) {
+        console.error("Redeem error:", err);
+        msg.textContent = "❌ Something went wrong. Check the console for details.";
         msg.style.color = "red";
       }
     };
