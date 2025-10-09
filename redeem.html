@@ -86,110 +86,112 @@
   </nav>
 
   <!-- ✅ Fixed & Improved Script -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import {
-      getFirestore, collection, query, where, getDocs,
-      doc, updateDoc, getDoc
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import {
+    getFirestore, collection, query, where, getDocs,
+    doc, updateDoc, getDoc
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
-      authDomain: "ecodrop-c571f.firebaseapp.com",
-      projectId: "ecodrop-c571f",
-      storageBucket: "ecodrop-c571f.firebasestorage.app",
-      messagingSenderId: "338661782199",
-      appId: "1:338661782199:web:9990829a46cd2ab57f9332"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
+    authDomain: "ecodrop-c571f.firebaseapp.com",
+    projectId: "ecodrop-c571f",
+    storageBucket: "ecodrop-c571f.firebasestorage.app",
+    messagingSenderId: "338661782199",
+    appId: "1:338661782199:web:9990829a46cd2ab57f9332"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    // --- Load logged user ---
-    const user = JSON.parse(localStorage.getItem("loggedUser"));
-    const userNameEl = document.getElementById("userName");
-    const userPointsEl = document.getElementById("userPoints");
+  // --- Load user info ---
+  const user = JSON.parse(localStorage.getItem("loggedUser"));
+  const userNameEl = document.getElementById("userName");
+  const userPointsEl = document.getElementById("userPoints");
 
-    if (user && user.name) {
-      userNameEl.textContent = user.name;
-      userPointsEl.textContent = user.points ?? 0;
+  if (user && user.name) {
+    userNameEl.textContent = user.name;
+    userPointsEl.textContent = user.points ?? 0;
+  } else {
+    userNameEl.textContent = "Guest";
+    userPointsEl.textContent = 0;
+  }
+
+  // --- Redeem function ---
+  window.redeemCode = async function () {
+    const inputCode = document.getElementById("redeemCode").value.trim();
+    const msg = document.getElementById("redeemMsg");
+
+    if (!user) {
+      msg.textContent = "⚠️ Please log in first.";
+      msg.style.color = "red";
+      return;
     }
 
-    // --- Redeem Function ---
-    window.redeemCode = async function () {
-      const msg = document.getElementById("redeemMsg");
-      const inputCode = document.getElementById("redeemCode").value.trim().toUpperCase();
+    if (!inputCode) {
+      msg.textContent = "⚠️ Enter a code.";
+      msg.style.color = "red";
+      return;
+    }
 
-      msg.textContent = "";
-      msg.style.color = "black";
+    try {
+      // Step 1: look through all batches under /codes/
+      const rootRef = collection(db, "codes");
+      const rootSnapshot = await getDocs(rootRef);
+      let foundDoc = null;
 
-      if (!user) {
-        msg.textContent = "⚠️ Please log in first.";
-        msg.style.color = "red";
-        return;
-      }
-      if (!inputCode) {
-        msg.textContent = "⚠️ Please enter a code.";
-        msg.style.color = "red";
-        return;
-      }
-
-      try {
-        // Find code document
-        const q = query(collection(db, "codes"), where("code", "==", inputCode));
+      for (const batch of rootSnapshot.docs) {
+        const codesRef = collection(db, "codes", batch.id, "codes");
+        const q = query(codesRef, where("code", "==", inputCode));
         const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-          msg.textContent = "❌ Invalid or non-existent code.";
-          msg.style.color = "red";
-          return;
+        if (!querySnapshot.empty) {
+          querySnapshot.forEach(docSnap => {
+            foundDoc = { id: docSnap.id, batchId: batch.id, ...docSnap.data() };
+          });
+          break;
         }
-
-        let codeDocId = null;
-        let codeData = null;
-        querySnapshot.forEach(docSnap => {
-          codeDocId = docSnap.id;
-          codeData = docSnap.data();
-        });
-
-        if (!codeData) throw new Error("Code data missing");
-
-        if (codeData.used === true) {
-          msg.textContent = "⚠️ This code has already been used.";
-          msg.style.color = "orange";
-          return;
-        }
-
-        // Get user reference and points
-        const userRef = doc(db, "users", user.id);
-        const userSnap = await getDoc(userRef);
-
-        if (!userSnap.exists()) {
-          msg.textContent = "⚠️ User not found in database.";
-          msg.style.color = "red";
-          return;
-        }
-
-        const currentPoints = userSnap.data().points || 0;
-        const newPoints = currentPoints + 1;
-
-        // Update both docs
-        await updateDoc(doc(db, "codes", codeDocId), { used: true });
-        await updateDoc(userRef, { points: newPoints });
-
-        // Update UI + local storage
-        user.points = newPoints;
-        localStorage.setItem("loggedUser", JSON.stringify(user));
-        userPointsEl.textContent = newPoints;
-
-        msg.textContent = `✅ Code accepted! You earned 1 point. Total: ${newPoints}`;
-        msg.style.color = "green";
-      } catch (err) {
-        console.error("Redeem error:", err);
-        msg.textContent = "❌ Something went wrong. Check the console for details.";
-        msg.style.color = "red";
       }
-    };
-  </script>
+
+      // Step 2: handle results
+      if (!foundDoc) {
+        msg.textContent = "❌ Invalid code.";
+        msg.style.color = "red";
+        return;
+      }
+
+      if (foundDoc.used) {
+        msg.textContent = "⚠️ Code already used.";
+        msg.style.color = "orange";
+        return;
+      }
+
+      // Step 3: Update user + mark code used
+      const userRef = doc(db, "users", user.id);
+      const userSnap = await getDoc(userRef);
+      const newPoints = (userSnap.data().points || 0) + 1;
+
+      await Promise.all([
+        updateDoc(doc(db, "codes", foundDoc.batchId, "codes", foundDoc.id), { used: true }),
+        updateDoc(userRef, { points: newPoints })
+      ]);
+
+      user.points = newPoints;
+      localStorage.setItem("loggedUser", JSON.stringify(user));
+      userPointsEl.textContent = newPoints;
+
+      msg.textContent = `✅ Code accepted! You earned 1 point. Total: ${newPoints}`;
+      msg.style.color = "green";
+
+    } catch (error) {
+      console.error("Error redeeming code:", error);
+      msg.textContent = "❌ Something went wrong. Try again.";
+      msg.style.color = "red";
+    }
+  };
+</script>
+
 </body>
 </html>
+
