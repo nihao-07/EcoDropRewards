@@ -75,60 +75,70 @@
   </nav>
 
   <!-- ✅ Firebase imports -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { 
+    getFirestore, 
+    collection, 
+    query, 
+    orderBy, 
+    limit, 
+    onSnapshot 
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // --- Firebase config (replace with yours) ---
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
+  // ✅ Your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
+    authDomain: "ecodrop-c571f.firebaseapp.com",
+    projectId: "ecodrop-c571f",
+    storageBucket: "ecodrop-c571f.firebasestorage.app",
+    messagingSenderId: "338661782199",
+    appId: "1:338661782199:web:9990829a46cd2ab57f9332"
+  };
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    // --- Show logged user name ---
-    const user = JSON.parse(localStorage.getItem("loggedUser"));
-    if (!user) window.location.href = "login.html";
-    else document.getElementById("userName").textContent = user.name;
+  // --- Show logged user name ---
+  const user = JSON.parse(localStorage.getItem("loggedUser"));
+  if (!user) window.location.href = "login.html";
+  else document.getElementById("userName").textContent = user.name;
 
-    // --- Load leaderboard ---
-    async function loadLeaderboard() {
-      try {
-        const q = query(collection(db, "users"), orderBy("points", "desc"), limit(10));
-        const snapshot = await getDocs(q);
+  // --- Real-time leaderboard ---
+  function loadLeaderboard() {
+    const q = query(collection(db, "users"), orderBy("points", "desc"), limit(10));
+    const list = document.getElementById("leaderboardList");
+    const loading = document.getElementById("loadingText");
 
-        const list = document.getElementById("leaderboardList");
-        const loading = document.getElementById("loadingText");
-        loading.style.display = "none";
+    // Listen for real-time updates
+    onSnapshot(q, (snapshot) => {
+      list.innerHTML = ""; // clear previous entries
+      loading.style.display = "none";
 
-        if (snapshot.empty) {
-          list.innerHTML = "<li>No users found</li>";
-          return;
-        }
-
-        let rank = 1;
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const li = document.createElement("li");
-          li.textContent = `${rank}. ${data.name} — ${data.points} pts`;
-          list.appendChild(li);
-          rank++;
-        });
-        console.log("Leaderboard loaded:", snapshot.size);
-      } catch (err) {
-        console.error("Error loading leaderboard:", err);
-        document.getElementById("loadingText").textContent = "Error loading leaderboard.";
+      if (snapshot.empty) {
+        list.innerHTML = "<li>No users found</li>";
+        return;
       }
-    }
 
-    loadLeaderboard();
+      let rank = 1;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement("li");
+        li.textContent = `🏅 ${rank}. ${data.name} — ${data.points} pts`;
+        list.appendChild(li);
+        rank++;
+      });
+    }, (error) => {
+      console.error("Error loading leaderboard:", error);
+      loading.textContent = "⚠️ Error loading leaderboard.";
+    });
+  }
+
+  loadLeaderboard();
+</script>
+
   </script>
 </body>
 </html>
+
