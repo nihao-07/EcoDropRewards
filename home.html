@@ -29,7 +29,6 @@
       margin-top: 10px;
       color: #333;
     }
-
     #leaderboard {
       margin: 25px auto;
       text-align: center;
@@ -43,12 +42,11 @@
       font-weight: 600;
       letter-spacing: 0.3px;
     }
-
     .user {
       padding: 15px 20px;
       margin: 10px auto;
       border-radius: 16px;
-      transition: all 0.5s ease;
+      transition: all 0.3s ease;
       width: 90%;
       max-width: 380px;
       font-weight: bold;
@@ -58,36 +56,26 @@
       backdrop-filter: blur(5px);
       box-shadow: 0 3px 10px rgba(0,0,0,0.05);
       background: rgba(255, 255, 255, 0.4);
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeIn 0.6s forwards;
+    }
+    .user:hover {
+      transform: scale(1.03);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
 
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* 🥇 Top 1 — keep your original gradient style */
+    /* 🥇 Top 1 */
     .user.rank-1 {
-      transform: scale(1.09);
-      background: linear-gradient(90deg, #ffeb3b, #ffc107);
-      color: transparent;
-      background-clip: text;
-      -webkit-background-clip: text;
+      transform: scale(1.15);
+      background: linear-gradient(90deg, #fff59d, #ffe082);
+      color: #5b4b00;
       font-size: 1.2rem;
       box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
     }
 
     /* 🥈 Top 2 */
     .user.rank-2 {
-      transform: scale(1.07);
-      background: linear-gradient(90deg, #cfd8dc, #b0bec5);
-      color: transparent;
-      background-clip: text;
-      -webkit-background-clip: text;
+      transform: scale(1.1);
+      background: linear-gradient(90deg, #e0e0e0, #f5f5f5);
+      color: #505050;
       font-size: 1.1rem;
       box-shadow: 0 5px 15px rgba(160, 160, 160, 0.3);
     }
@@ -95,10 +83,8 @@
     /* 🥉 Top 3 */
     .user.rank-3 {
       transform: scale(1.05);
-      background: linear-gradient(90deg, #d7a75c, #c67c3d);
-      color: transparent;
-      background-clip: text;
-      -webkit-background-clip: text;
+      background: linear-gradient(90deg, #f7d9aa, #fbc687);
+      color: #6a3c00;
       font-size: 1.05rem;
       box-shadow: 0 5px 15px rgba(210, 140, 50, 0.3);
     }
@@ -129,11 +115,6 @@
       text-decoration: none;
       font-weight: bold;
     }
-
-    /* Smooth movement animation for rank change */
-    .moving {
-      transition: transform 0.5s ease-in-out;
-    }
   </style>
 </head>
 <body>
@@ -155,6 +136,7 @@
     <a href="user.html">Profile</a>
   </nav>
 
+  <!-- ✅ Firebase imports -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { 
@@ -186,39 +168,34 @@
     const loading = document.getElementById("loadingText");
     const q = query(collection(db, "users"), orderBy("points", "desc"), limit(10));
 
-    let previousRanks = [];
-
     onSnapshot(q, (snapshot) => {
-      const users = [];
-      snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
-
-      loading.style.display = "none";
       list.innerHTML = "";
+      loading.style.display = "none";
 
-      users.forEach((data, index) => {
+      if (snapshot.empty) {
+        list.innerHTML = "<p>No users found</p>";
+        return;
+      }
+
+      let rank = 1;
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+
         const div = document.createElement("div");
         div.classList.add("user");
 
-        if (index === 0) div.classList.add("rank-1");
-        else if (index === 1) div.classList.add("rank-2");
-        else if (index === 2) div.classList.add("rank-3");
+        if (rank === 1) div.classList.add("rank-1");
+        else if (rank === 2) div.classList.add("rank-2");
+        else if (rank === 3) div.classList.add("rank-3");
         else div.classList.add("rank-other");
 
-        const prevIndex = previousRanks.indexOf(data.id);
-        if (prevIndex !== -1 && prevIndex !== index) {
-          div.classList.add("moving");
-          div.style.transform = `translateY(${(prevIndex - index) * 15}px)`;
-          setTimeout(() => (div.style.transform = "translateY(0)"), 400);
-        }
-
         div.innerHTML = `
-          <span>${index + 1}. ${data.name}</span>
+          <span>${rank}. ${data.name}</span>
           <span class="points">${data.points} pts</span>
         `;
         list.appendChild(div);
+        rank++;
       });
-
-      previousRanks = users.map(u => u.id);
     }, (error) => {
       console.error("Error loading leaderboard:", error);
       loading.textContent = "⚠️ Error loading leaderboard.";
@@ -226,4 +203,3 @@
   </script>
 </body>
 </html>
-
