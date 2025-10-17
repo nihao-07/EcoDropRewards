@@ -3,47 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Redeem - EcoBottle</title>
+  <title>Redeem - EcoDrop</title>
   <style>
     body {
-      font-family: Poppins, sans-serif;
-      background: #f6fff6;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(180deg, #e7fbe7, #f6fff6);
       text-align: center;
       margin: 0;
-      padding-bottom: 60px;
+      padding-bottom: 70px;
+      overflow-x: hidden;
     }
+
     header {
       background: #6abf69;
       color: white;
       padding: 1rem;
       font-size: 1.3rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
+
     .card {
       background: white;
       border-radius: 15px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      width: 300px;
-      margin: 40px auto;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+      width: 320px;
+      margin: 50px auto;
       padding: 25px;
+      opacity: 0;
+      transform: translateY(40px);
+      animation: slideUp 0.8s ease forwards;
     }
+
+    @keyframes slideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     input {
       width: 90%;
       padding: 10px;
-      border: 1px solid #a3d9a5;
+      border: 2px solid #a3d9a5;
       border-radius: 8px;
       margin-top: 10px;
       text-align: center;
+      font-size: 1rem;
+      transition: 0.3s ease;
     }
+
+    input:focus {
+      outline: none;
+      border-color: #6abf69;
+      box-shadow: 0 0 5px #a3d9a5;
+    }
+
     button {
       background: #6abf69;
       color: white;
       border: none;
-      padding: 10px 15px;
+      padding: 12px 18px;
       border-radius: 8px;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 15px;
+      font-weight: bold;
+      transition: all 0.2s ease;
     }
-    button:hover { background: #5cae5c; }
+
+    button:active {
+      transform: scale(0.96);
+      background: #5cae5c;
+    }
+
+    .loading-spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid #c7eac7;
+      border-top: 3px solid #6abf69;
+      border-radius: 50%;
+      display: none;
+      margin: 12px auto;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
     nav {
       display: flex;
       justify-content: space-around;
@@ -53,15 +104,51 @@
       position: fixed;
       bottom: 0;
       width: 100%;
+      z-index: 10;
     }
+
     nav a {
       color: #6abf69;
       text-decoration: none;
       font-weight: bold;
+      transition: 0.2s;
     }
+
+    nav a:hover {
+      color: #4f9e4f;
+    }
+
     #redeemMsg {
-      margin-top: 10px;
+      margin-top: 15px;
       font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    #redeemMsg.show {
+      opacity: 1;
+    }
+
+    /* 🌿 Confetti styles */
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: fall 3s linear forwards;
+      z-index: 999;
+      opacity: 0.9;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
     }
   </style>
 </head>
@@ -75,6 +162,7 @@
       <h3>Enter Your Code</h3>
       <input type="text" id="redeemCode" placeholder="e.g., MO1-AB123">
       <button id="redeemBtn" onclick="redeemCode()">Redeem</button>
+      <div class="loading-spinner" id="loadingSpinner"></div>
       <p id="redeemMsg"></p>
     </div>
   </main>
@@ -86,15 +174,12 @@
   </nav>
 
   <script type="module">
-    console.log("✅ Redeem script loaded!");
-
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getFirestore, collection, query, where, getDocs,
       doc, updateDoc, getDoc
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // ✅ Firebase setup
     const firebaseConfig = {
       apiKey: "AIzaSyCNOmS5fYOWkGrFXHWodFnbjfb5OHKa4ns",
       authDomain: "ecodrop-c571f.firebaseapp.com",
@@ -107,63 +192,44 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ✅ User setup
     const user = JSON.parse(localStorage.getItem("loggedUser"));
     const userNameEl = document.getElementById("userName");
     const userPointsEl = document.getElementById("userPoints");
     const msg = document.getElementById("redeemMsg");
+    const spinner = document.getElementById("loadingSpinner");
+    const btn = document.getElementById("redeemBtn");
 
     if (user && user.name) {
       userNameEl.textContent = user.name;
       userPointsEl.textContent = user.points ?? 0;
     }
 
-    // ✅ Redeem function
     window.redeemCode = async function () {
       const inputCode = document.getElementById("redeemCode").value.trim().toUpperCase();
-      console.log("🔍 Redeeming code:", inputCode);
       msg.textContent = "";
+      msg.classList.remove("show");
 
-      if (!user) {
-        msg.textContent = "⚠️ Please log in first.";
-        msg.style.color = "red";
-        return;
-      }
-      if (!inputCode) {
-        msg.textContent = "⚠️ Enter a code.";
-        msg.style.color = "red";
-        return;
-      }
+      if (!user) return showMessage("⚠️ Please log in first.", "red");
+      if (!inputCode) return showMessage("⚠️ Enter a code.", "red");
+
+      spinner.style.display = "block";
+      btn.disabled = true;
 
       try {
         const q = query(collection(db, "codes"), where("code", "==", inputCode));
         const snapshot = await getDocs(q);
-        console.log("📦 Query snapshot size:", snapshot.size);
 
-        if (snapshot.empty) {
-          msg.textContent = "❌ Invalid code.";
-          msg.style.color = "red";
-          return;
-        }
+        if (snapshot.empty) return showMessage("❌ Invalid code.", "red");
 
         let codeDoc = null;
         snapshot.forEach(docSnap => codeDoc = { id: docSnap.id, ...docSnap.data() });
-        console.log("✅ Found code:", codeDoc);
 
-        if (codeDoc.used) {
-          msg.textContent = "⚠️ Code already used.";
-          msg.style.color = "orange";
-          return;
-        }
+        if (codeDoc.used) return showMessage("⚠️ Code already used.", "orange");
 
         const userRef = doc(db, "users", user.id);
         const userSnap = await getDoc(userRef);
 
-        if (!userSnap.exists()) {
-          msg.textContent = "⚠️ User not found.";
-          msg.style.color = "red";
-          return;
-        }
+        if (!userSnap.exists()) return showMessage("⚠️ User not found.", "red");
 
         const newPoints = (userSnap.data().points || 0) + 1;
 
@@ -174,15 +240,46 @@
         localStorage.setItem("loggedUser", JSON.stringify(user));
         userPointsEl.textContent = newPoints;
 
-        msg.textContent = `✅ Code accepted! You earned 1 point. Total: ${newPoints}`;
-        msg.style.color = "green";
+        showConfetti();
+        showMessage(`✅ Code accepted! You earned 1 point. Total: ${newPoints}`, "green");
       } catch (err) {
         console.error("❌ Redeem error:", err);
-        msg.textContent = "❌ Something went wrong. Check console for details.";
-        msg.style.color = "red";
+        showMessage("❌ Something went wrong. Try again.", "red");
+      } finally {
+        spinner.style.display = "none";
+        btn.disabled = false;
       }
     };
+
+    function showMessage(text, color) {
+      msg.textContent = text;
+      msg.style.color = color;
+      msg.classList.add("show");
+      spinner.style.display = "none";
+      btn.disabled = false;
+    }
+
+    // 🌿 Confetti generator
+    function showConfetti() {
+      for (let i = 0; i < 25; i++) {
+        const confetti = document.createElement("div");
+        confetti.classList.add("confetti");
+        document.body.appendChild(confetti);
+
+        const size = Math.random() * 8 + 6;
+        const left = Math.random() * 100;
+        const delay = Math.random() * 0.5;
+        const color = ["#6abf69", "#a3d977", "#d4e157", "#9ccc65"][Math.floor(Math.random() * 4)];
+
+        confetti.style.width = `${size}px`;
+        confetti.style.height = `${size}px`;
+        confetti.style.left = `${left}vw`;
+        confetti.style.background = color;
+        confetti.style.animationDelay = `${delay}s`;
+
+        setTimeout(() => confetti.remove(), 3000);
+      }
+    }
   </script>
 </body>
 </html>
-
