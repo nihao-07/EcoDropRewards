@@ -128,28 +128,6 @@
     #redeemMsg.show {
       opacity: 1;
     }
-
-    /* 🌿 Confetti styles */
-    .confetti {
-      position: fixed;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      animation: fall 3s linear forwards;
-      z-index: 999;
-      opacity: 0.9;
-    }
-
-    @keyframes fall {
-      0% {
-        transform: translateY(0) rotate(0deg);
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(100vh) rotate(720deg);
-        opacity: 0;
-      }
-    }
   </style>
 </head>
 <body>
@@ -240,7 +218,6 @@
         localStorage.setItem("loggedUser", JSON.stringify(user));
         userPointsEl.textContent = newPoints;
 
-        showConfetti();
         showMessage(`✅ Code accepted! You earned 1 point. Total: ${newPoints}`, "green");
       } catch (err) {
         console.error("❌ Redeem error:", err);
@@ -254,31 +231,9 @@
     function showMessage(text, color) {
       msg.textContent = text;
       msg.style.color = color;
-      msg.classList.add("show");
       spinner.style.display = "none";
       btn.disabled = false;
-    }
-
-    // 🌿 Confetti generator
-    function showConfetti() {
-      for (let i = 0; i < 25; i++) {
-        const confetti = document.createElement("div");
-        confetti.classList.add("confetti");
-        document.body.appendChild(confetti);
-
-        const size = Math.random() * 8 + 6;
-        const left = Math.random() * 100;
-        const delay = Math.random() * 0.5;
-        const color = ["#6abf69", "#a3d977", "#d4e157", "#9ccc65"][Math.floor(Math.random() * 4)];
-
-        confetti.style.width = `${size}px`;
-        confetti.style.height = `${size}px`;
-        confetti.style.left = `${left}vw`;
-        confetti.style.background = color;
-        confetti.style.animationDelay = `${delay}s`;
-
-        setTimeout(() => confetti.remove(), 3000);
-      }
+      msg.classList.add("show");
     }
   </script>
 </body>
